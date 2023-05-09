@@ -4,13 +4,22 @@ const chart = echarts.init(chartDom);
 let option;
 chart.showLoading();
 
+// Resize chart when window size changes
+window.addEventListener('resize', () => {
+    chart.resize();
+}, true);
+
 // Fetch USA layout and case data
 Promise.all([
     fetch('USA.json').then(resp => resp.json()),
     fetch('all.json').then(resp => resp.json())
 ]).then(data => {
     const usaJson = data[0];
+
     const casesJson = data[1];
+    casesJson.sort((first, second) => {
+        return new Date(second.date) - new Date(first.date);
+    });
 
     const states = casesJson.reduce((list, courtCase) => {
         if (!list.includes(courtCase.state))
@@ -54,17 +63,11 @@ Promise.all([
             max: maxCases,
             inRange: {
                 color: [
-                    '#313695',
-                    '#4575b4',
-                    '#74add1',
-                    '#abd9e9',
                     '#e0f3f8',
-                    '#ffffbf',
-                    '#fee090',
-                    '#fdae61',
-                    '#f46d43',
-                    '#d73027',
-                    '#a50026'
+                    '#abd9e9',
+                    '#74add1',
+                    '#4575b4',
+                    '#313695',
                 ]
             },
             text: ['High', 'Low']
@@ -103,6 +106,37 @@ Promise.all([
         ]
     };
     chart.setOption(option);
+
+    chart.on('click', (params) => {
+        if (params.name) {
+            const state = params.name;
+
+            const caseHeading = document.getElementById('case-heading');
+            caseHeading.innerText = 'Cases in ' + state;
+
+            const caseList = document.getElementById('case-list');
+            caseList.replaceChildren(...casesJson.filter((courtCase) => courtCase.state === state).map((courtCase) => {
+                const listItem = document.createElement('li');
+
+                const header = document.createElement('h3');
+                header.innerText = courtCase.title;
+
+                const date = document.createElement('span');
+                date.innerText = new Date(courtCase.date).toLocaleDateString('en-us', { day: '2-digit', year: 'numeric', month: 'long'});
+
+                const brief = document.createElement('p');
+                brief.innerText = courtCase['desc'];
+
+                const link = document.createElement('a');
+                link.text = 'Read More';
+                link.href = courtCase.url;
+
+                listItem.append(header, date, brief, link);
+
+                return listItem;
+            }));
+        }
+    });
 });
 
 option && chart.setOption(option);
