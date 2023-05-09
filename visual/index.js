@@ -1,32 +1,108 @@
-import * as d3 from "https://cdn.jsdelivr.net/npm/d3@7/+esm";
+// Initialize chart
+const chartDom = document.getElementById('map');
+const chart = echarts.init(chartDom);
+let option;
+chart.showLoading();
 
-const values = [
-    {x: 0, y: 1},
-    {x: 1, y: 2},
-    {x: 2, y: 3},
-    {x: 3, y: 4}
-]
+// Fetch USA layout and case data
+Promise.all([
+    fetch('USA.json').then(resp => resp.json()),
+    fetch('all.json').then(resp => resp.json())
+]).then(data => {
+    const usaJson = data[0];
+    const casesJson = data[1];
 
-const width = 960, height = 500;
+    const states = casesJson.reduce((list, courtCase) => {
+        if (!list.includes(courtCase.state))
+            list.push(courtCase.state);
+        return list;
+    }, []);
 
-const x_scale = d3.scaleBand().range([0, width]).padding(0.1);
-const y_scale = d3.scaleLinear().range([height, 0]);
+    console.log(states);
 
-const svg = d3.select("#map")
-    .attr("width", width)
-    .attr("height", height);
+    const totalCases = states.map((state) => {
+        const count = casesJson.reduce((count, courtCase) => {
+            if (courtCase.state === state)
+                return count + 1;
+            return count;
+        } , 0);
+        return { name: state, value: count };
+    });
 
-// Scale the Domain
-x_scale.domain(values.map((d) => d.x));
-y_scale.domain([0, d3.max(values, (d) => d.y)]);
+    console.log(totalCases);
 
-// add the rectangles for the bar chart
-svg
-    .selectAll("rect")
-    .data(values)
-    .join("rect")
-    .attr("class", "bar")
-    .attr("x", (d) => x_scale(d.x))
-    .attr("y", (d) => y_scale(d.y))
-    .attr("width", x_scale.bandwidth())
-    .attr("height", (d) => height - y_scale(d.y));
+    const minCases = 0;
+    const maxCases = totalCases.reduce((oldMax, pair) => Math.max(oldMax, pair.value), 0);
+
+    const projection = d3.geoAlbersUsa();
+    chart.hideLoading();
+    echarts.registerMap('USA', usaJson);
+    option = {
+        title: {
+            text: 'LGBT Rights Legal Actions',
+            subtext: 'Data from the ACLU and Lambda Legal',
+            left: 'right'
+        },
+        tooltip: {
+            trigger: 'item',
+            showDelay: 0,
+            transitionDuration: 0.2
+        },
+        visualMap: {
+            left: 'right',
+            min: minCases,
+            max: maxCases,
+            inRange: {
+                color: [
+                    '#313695',
+                    '#4575b4',
+                    '#74add1',
+                    '#abd9e9',
+                    '#e0f3f8',
+                    '#ffffbf',
+                    '#fee090',
+                    '#fdae61',
+                    '#f46d43',
+                    '#d73027',
+                    '#a50026'
+                ]
+            },
+            text: ['High', 'Low']
+        },
+        toolbox: {
+            show: true,
+            //orient: 'vertical',
+            left: 'left',
+            top: 'top',
+            feature: {
+                dataView: { readOnly: false },
+                restore: {},
+                saveAsImage: {}
+            }
+        },
+        series: [
+            {
+                name: 'Number of Cases',
+                type: 'map',
+                map: 'USA',
+                projection: {
+                    project: function (point) {
+                        return projection(point);
+                    },
+                    unproject: function (point) {
+                        return projection.invert(point);
+                    }
+                },
+                emphasis: {
+                    label: {
+                        show: true
+                    }
+                },
+                data: totalCases
+            }
+        ]
+    };
+    chart.setOption(option);
+});
+
+option && chart.setOption(option);
