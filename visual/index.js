@@ -9,6 +9,14 @@ window.addEventListener('resize', () => {
     chart.resize();
 }, true);
 
+const dateSlider = document.getElementById('date-range');
+const datePreview = document.getElementById('date-range-preview');
+dateSlider.addEventListener('input', () => {
+    datePreview.innerText = dateSlider.value;
+});
+
+let currentState = '';
+
 // Fetch USA layout and case data
 Promise.all([
     fetch('USA.json').then(resp => resp.json()),
@@ -29,19 +37,21 @@ Promise.all([
 
     console.log(states);
 
-    const totalCases = states.map((state) => {
-        const count = casesJson.reduce((count, courtCase) => {
-            if (courtCase.state === state)
-                return count + 1;
-            return count;
-        } , 0);
-        return { name: state, value: count };
-    });
+    function calcTotalCases(year) {
+        const totalCases = states.map((state) => {
+            const count = casesJson.reduce((count, courtCase) => {
+                if (courtCase.state === state && new Date(courtCase.date).getFullYear() >= year)
+                    return count + 1;
+                return count;
+            } , 0);
+            return { name: state, value: count };
+        });
 
-    console.log(totalCases);
+        return totalCases;
+    };
 
     const minCases = 0;
-    const maxCases = totalCases.reduce((oldMax, pair) => Math.max(oldMax, pair.value), 0);
+    const maxCases = calcTotalCases(0).reduce((oldMax, pair) => Math.max(oldMax, pair.value), 0);
 
     const projection = d3.geoAlbersUsa();
     chart.hideLoading();
@@ -101,40 +111,49 @@ Promise.all([
                         show: true
                     }
                 },
-                data: totalCases
+                data: calcTotalCases(dateSlider.value)
             }
         ]
     };
     chart.setOption(option);
 
+    function updateCaseList(state, year) {
+        const caseHeading = document.getElementById('case-heading');
+        caseHeading.innerText = 'Cases in ' + state;
+
+        const caseList = document.getElementById('case-list');
+        caseList.replaceChildren(...casesJson.filter((courtCase) => courtCase.state === state && new Date(courtCase.date).getFullYear() >= year).map((courtCase) => {
+            const listItem = document.createElement('li');
+
+            const header = document.createElement('h3');
+            header.innerText = courtCase.title;
+
+            const date = document.createElement('span');
+            date.innerText = new Date(courtCase.date).toLocaleDateString('en-us', { day: '2-digit', year: 'numeric', month: 'long'});
+
+            const brief = document.createElement('p');
+            brief.innerText = courtCase['desc'];
+
+            const link = document.createElement('a');
+            link.text = 'Read More';
+            link.href = courtCase.url;
+
+            listItem.append(header, date, brief, link);
+
+            return listItem;
+        }));
+    }
+
+    dateSlider.addEventListener('input', () => {
+        option.series[0].data = calcTotalCases(dateSlider.value);
+        chart.setOption(option);
+        updateCaseList(currentState, dateSlider.value);
+    });
+
     chart.on('click', (params) => {
         if (params.name) {
-            const state = params.name;
-
-            const caseHeading = document.getElementById('case-heading');
-            caseHeading.innerText = 'Cases in ' + state;
-
-            const caseList = document.getElementById('case-list');
-            caseList.replaceChildren(...casesJson.filter((courtCase) => courtCase.state === state).map((courtCase) => {
-                const listItem = document.createElement('li');
-
-                const header = document.createElement('h3');
-                header.innerText = courtCase.title;
-
-                const date = document.createElement('span');
-                date.innerText = new Date(courtCase.date).toLocaleDateString('en-us', { day: '2-digit', year: 'numeric', month: 'long'});
-
-                const brief = document.createElement('p');
-                brief.innerText = courtCase['desc'];
-
-                const link = document.createElement('a');
-                link.text = 'Read More';
-                link.href = courtCase.url;
-
-                listItem.append(header, date, brief, link);
-
-                return listItem;
-            }));
+            currentState = params.name;
+            updateCaseList(currentState, dateSlider.value);
         }
     });
 });
