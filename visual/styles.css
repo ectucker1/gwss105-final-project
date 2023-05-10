@@ -1,0 +1,15 @@
+html, body {
+    overflow-x: hidden;
+    font-family: sans-serif;
+    margin: 40px auto;
+    max-width: 1300px;
+    line-height: 1.6;
+    font-size: 18px;
+    color: #444;
+    padding: 0 10px;
+    background: #EFEFEF;
+}
+
+#map-container {
+    padding: 10px;
+}

@@ -11,6 +11,7 @@ window.addEventListener('resize', () => {
 
 const dateSlider = document.getElementById('date-range');
 const datePreview = document.getElementById('date-range-preview');
+datePreview.innerText = dateSlider.value;
 dateSlider.addEventListener('input', () => {
     datePreview.innerText = dateSlider.value;
 });
@@ -119,7 +120,11 @@ Promise.all([
 
     function updateCaseList(state, year) {
         const caseHeading = document.getElementById('case-heading');
-        caseHeading.innerText = 'Cases in ' + state;
+        if (state.length !== 0) {
+            caseHeading.innerText = 'Cases in ' + state;
+        } else {
+            caseHeading.innerText = '';
+        }
 
         const caseList = document.getElementById('case-list');
         caseList.replaceChildren(...casesJson.filter((courtCase) => courtCase.state === state && new Date(courtCase.date).getFullYear() >= year).map((courtCase) => {

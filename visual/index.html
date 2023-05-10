@@ -2,37 +2,51 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Queer Legal Activism</title>
+    <title>LGBT Rights Legal Actions</title>
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.2/dist/echarts.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/d3-array@3.2.3/dist/d3-array.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/d3-geo@3.1.0/dist/d3-geo.min.js"></script>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <h1>Queer Legal Activism</h1>
+    <h1>LGBT Rights Legal Actions</h1>
     <p>
-        There are many visualizations of the current wave of anti-LGBT legislation,
-        such as <a href="https://www.aclu.org/legislative-attacks-on-lgbtq-rights">this one from the ACLU</a>.
-        These capture important information and are a great tool to stay informed and strategize around legal attacks.
+        There are many data sources tracking of the current wave of anti-queer legislation,
+        such as <a href="https://www.aclu.org/legislative-attacks-on-lgbtq-rights">this map from the ACLU</a>
+        and <a href="https://www.erininthemorning.com/">Erin Reed's blog</a>.
+        These capture important information and are a great tool to stay informed about
+        how queer and particularly trans people are being attacked by state legislatures.
     </p>
     <p>
-        But just seeing the ant-queer legislation shows only part of the story.
-        Resisting with these laws, there have been a wide variety of lawsuits and other actions by organizations
+        But just seeing the actions taken by bigoted legislators tells only part of the story.
+        There have also been organizations taking legal action to advocate for queer rights,
         such as the <a href="https://www.aclu.org/">ACLU</a> and <a href="https://lambdalegal.org/">Lambda Legal</a>.
+        Their work has continued on through many lawsuits challenging current discriminatory legislation.
     </p>
     <p>
         The following graphic seeks to highlight some of this work.
-        The chart maps lawsuits scraped from the ACLU and Lambda Legal's websites.
+        The chart maps lawsuits and other legal actions programmatically scraped from the ACLU and Lambda Legal's websites.
+        Data has not been extensively cleaned up from the scrape, so there may be slight inconsistencies,
+        such as dates for certain cases being taken from court fillings rather than more well-known decision dates.
+        Source code for both the scraper and this page can be found on <a href="https://github.com/ectucker1/gwss105-final-project/">GitHub</a>.
     </p>
     <noscript>
         <p>JavaScript is required to view this visualization.</p>
     </noscript>
+    <p>
+        The slider below can be used to filter for cases last updated after a certain date.
+        Clicking on a state will show the list of cases from that state along with links to the pages they were scraped from,
+        which have more context about each case.
+    </p>
     <div class="slidecontainer">
         <label for="date-range">Cases Since:</label>
+        <div id="date-range-preview" style="display: inline-block">1999</div>
         <input type="range" min="1999" max="2023" value="1999" class="slider" id="date-range">
-        <div id="date-range-preview">1999</div>
     </div>
-    <div id="map" style="height: 680px;"></div>
-    <h2 id="case-heading">Cases in _</h2>
+    <div id="map-container">
+        <div id="map" style="height: 680px;"></div>
+    </div>
+    <h2 id="case-heading"></h2>
     <ul id="case-list">
     </ul>
     <script src="index.js"></script>
